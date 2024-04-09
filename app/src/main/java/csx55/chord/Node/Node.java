@@ -20,8 +20,6 @@ public class Node implements Runnable, Protocol{
 
     //lets make it cleaner this time
 
-
-    private volatile String myName;
     protected volatile int myPort;
     protected volatile String myIP;
 
