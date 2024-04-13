@@ -226,6 +226,7 @@ public class peerNode extends Node {
         
         TCPSender sender = con.getTcpSender();
         Event helpResponse = EventFactory.createEvent(CONTACTPEERRESPONSE);
+        System.out.println(nextNode);
         if (nextNode.equals("second")){
             //default setup, it becomes the next regardless, and we point it to us.
             System.out.println("try this!");
@@ -233,12 +234,21 @@ public class peerNode extends Node {
             helpResponse.setData(response);
             this.myForwardCon = con;
             this.myBackwardCon = con;
-            }
+        }
         else if(nextNode.equals("forward")){
             //signals we are done and our next should be that one
+            System.out.println("Forward");
             String response = 1 + " " + this.myForwardCon.getName();
+            helpResponse.setData(response);
+
         }
         else {
+            System.out.println("Default");
+            System.out.println("I am : " + this.giveName());
+            System.out.println("go here + " + nextNode);
+            System.out.println("My hash : " + giveHash());
+            String response = 2 + " " + nextNode;
+            helpResponse.setData(response);
             //default telling us to keep going
 
         }
@@ -321,8 +331,8 @@ public class peerNode extends Node {
         System.out.println(this.forwardHash);
         //determine which one has the better table to grab from
         if (this.backHash == this.forwardHash){
-            //only send the important one
-            notifyNeighbor(this.myForwardCon, 2);
+            //only send the important one, and loop it
+            notifyNeighbor(this.myForwardCon, 3);
             return;
         }
         notifyNeighbor(this.myBackwardCon, 1);
@@ -346,15 +356,31 @@ public class peerNode extends Node {
         }
     }
 
+
     public void recievedNeighbor(String [][] data, connectionData con){
         System.out.println("I have a new neighbor");
         System.out.println(data[0][0]);
+        if (data[0][0].equals("3")){
+            //loop, first one added after meeee
+            //the node talking to us is behind us! lets give them our data
+            System.out.println("They want my table too!");
+            con.setName(data[0][1]);
+            this.myBackwardCon = con;
+            this.myForwardCon = con;
+            this.backHash = Double.valueOf(data[0][2]);
+            this.forwardHash = Double.valueOf(data[0][2]);
+            sendMyTable();
+            this.myFingerTable.selfCheckFinger();
+            this.myFingerTable.printTable();
+            System.out.println("neat");
+        }
         if (data[0][0].equals("2")){
             //the node talking to us is behind us! lets give them our data
             System.out.println("They want my table too!");
             this.myBackwardCon = con;
             this.backHash = Double.valueOf(data[0][2]);
             sendMyTable();
+            this.myFingerTable.printTable();
         }
         else{
             this.myForwardCon = con;
@@ -375,6 +401,7 @@ public class peerNode extends Node {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        this.myFingerTable.printTable();
     }
 
     public void handleTableQuery(String[][]data, connectionData con){

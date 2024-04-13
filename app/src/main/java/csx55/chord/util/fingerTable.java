@@ -162,6 +162,62 @@ public class fingerTable {
         return stringBuilder.toString();
     }
 
+    public void selfCheckFinger(){
+        System.out.println("self upate");
+        System.out.println("my hash: " + this.parent.giveHash());
+        System.out.println("forward/both hash " + this.parent.forwardHash);
+        System.out.println(" you sure? " + this.parent.myForwardCon);
+        System.out.println("this connection : " + this.parent.myForwardCon.getName());
+        for (HashMap.Entry<Integer,chord> entry : this.fingerTable.entrySet()){
+            if (this.parent.backHash == this.parent.forwardHash){
+                //System.out.println("Loop detected, are we behind or forward?");
+                if (this.parent.forwardHash > this.parent.giveHash()){
+                    //everything not inbetween us is going to be ours then
+                    if (entry.getValue().getPosition() > this.parent.forwardHash){
+                        //ours
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.giveHash());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+
+                    }
+                    else{
+
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.forwardHash);
+                        tempChord.setAddresss(this.parent.myForwardCon.getName());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+                        //theirs
+                    }
+                }
+                if (this.parent.forwardHash < this.parent.giveHash()){
+                    if (entry.getValue().getPosition() > this.parent.forwardHash){
+                        //theirs
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.forwardHash);
+                        tempChord.setAddresss(this.parent.myForwardCon.getName());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+
+                    }
+                    else{
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.giveHash());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+                        //ours
+                    }
+                }
+
+            }
+
+        }
+        printTable();
+
+    }
+
+
     public void updateFingerTable(ArrayList<chord> tempFingerTable){
         System.out.println("UPDATE");
         DecimalFormat df = new DecimalFormat("#");
@@ -178,7 +234,50 @@ public class fingerTable {
             String spot = "";
             System.out.println("Forward finger: " + df.format(this.parent.forwardHash));
             System.out.println(entry.getValue().getPosition());
-            if (entry.getValue().getPosition() < this.parent.forwardHash && entry.getValue().getPosition() > this.parent.giveHash()){
+            //loop scenario first
+            if (this.parent.backHash == this.parent.forwardHash){
+                System.out.println("Loop detected, are we behind or forward?");
+                if (this.parent.forwardHash > this.parent.giveHash()){
+                    //everything not inbetween us is going to be ours then
+                    if (entry.getValue().getPosition() > this.parent.forwardHash){
+                        //ours
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.giveHash());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+                        spot = "myself";
+
+                    }
+                    else{
+
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.forwardHash);
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+                        spot = "theirs";
+
+                        //theirs
+                    }
+                }
+                if (this.parent.forwardHash < this.parent.giveHash()){
+                    if (entry.getValue().getPosition() > this.parent.forwardHash){
+                        //theirs
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.forwardHash);
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+
+                    }
+                    else{
+                        chord tempChord = entry.getValue();
+                        tempChord.setHash(this.parent.giveHash());
+                        System.out.println("this hash : " + this.parent.giveHash());
+                        this.fingerTable.put(entry.getKey(), tempChord);
+                        //ours
+                    }
+                }
+            }
+            else if (entry.getValue().getPosition() < this.parent.forwardHash && entry.getValue().getPosition() > this.parent.giveHash()){
                 //this is our forward hashes
                 chord tempChord = entry.getValue();
                 tempChord.setHash(this.parent.forwardHash);
@@ -188,22 +287,22 @@ public class fingerTable {
                 spot = "myself";
 
             }
+            else if (this.parent.backHash > this.parent.giveHash()){
+                double tempmyHash = 2147483647 * 2;
+                if (entry.getValue().getPosition() < tempmyHash && entry.getValue().getPosition() > this.parent.backHash){
+                    //this is ours now too!
+                    System.out.println("thjis is ours now!");
+                    chord tempChord = entry.getValue();
+                    tempChord.setHash(this.parent.forwardHash);
+                    System.out.println("this hash : " + this.parent.giveHash());
+                    
+                    this.fingerTable.put(entry.getKey(), tempChord);
+                    spot = "myself";
 
-                //covered between us, dw about it, its gonna be them
-                //its in front of us
-
-                //dont reset, just update
-
-                chord tempChord = entry.getValue();
-                tempChord.setHash(this.parent.giveHash());
-
-                System.out.println("this hash : " + this.parent.giveHash());
-                {
-                this.fingerTable.put(entry.getKey(), tempChord);
-                spot = "myself";
-
+                }
             }
-            else{
+            else if (entry.getValue().getPosition() > this.parent.forwardHash){
+                System.out.println("last ditch;");
                 double spotHash = 0;
                 System.out.println("Looking for: " + entry.getValue().getPosition());
                 

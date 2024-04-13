@@ -18,7 +18,11 @@ public class chord {
 
     public void setHash(double hash){
         this.Hash = hash;
-    }   
+    }
+    
+    public void setAddresss(String addr){
+        this.address = addr;
+    }
 
     //psotion ranging from 1-32
     public double getPosition(){
