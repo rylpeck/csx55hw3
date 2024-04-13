@@ -107,10 +107,11 @@ public class discoveryNode extends Node{
             
         //improvedConnection(newNode);
         String tempkey = data[0][0] +":" +data[0][1];
-        int nodesHash = Integer.valueOf(data[0][2]);
+        double nodesHash = Double.valueOf(data[0][2]);
         Boolean correct = validateConnection(con.getSocket(), tempkey, nodesHash);
         if (correct == false){
             //System.out.println("Rejected, not true ip");
+            return 0;
         }
         if (NodesList.containsKey(tempkey)){
             //System.out.println("Rejected");
@@ -136,7 +137,7 @@ public class discoveryNode extends Node{
         return 0;
     }
 
-    public Boolean validateConnection(Socket sock, String nodeName, int nodesHash){
+    public Boolean validateConnection(Socket sock, String nodeName, double nodesHash){
         //System.out.print("Validating connection...");
 
         //this.myIP = this.serverSocket.getInetAddress().getHostAddress();
@@ -148,12 +149,22 @@ public class discoveryNode extends Node{
             tempName = tempName.replace("/", "");
         }  
         if (sock.getInetAddress().isLoopbackAddress() || sock.getInetAddress().isAnyLocalAddress()){
-            //System.out.println("Is localhost:");
+            System.out.println("Is localhost:");
             //so that parts good
             //check port
-            if (nodesHash == (nodeName.hashCode())){
+
+            //heres how we cheat the hashcode
+            //-2147483648 to 2147483647
+            double hashedName = nodeName.hashCode();
+
+            if (hashedName < 0){
+                hashedName = (-hashedName) + 2147483647;
+            }
+
+            if (nodesHash == ((hashedName))){
                 return true;
             }
+            System.out.println("FALSE");
             return false;
         }
         else{

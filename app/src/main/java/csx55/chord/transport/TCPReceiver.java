@@ -62,12 +62,13 @@ public class TCPReceiver implements Runnable {
             
             try {
                 dataLength = this.din.readInt();
-                //System.err.println("A length you say? " + dataLength);
+                System.err.println("A length you say? " + dataLength);
                 data = new byte[dataLength];
                 din.readFully(data, 0, dataLength);
            
-                //String outputString = new String(data, StandardCharsets.UTF_8);
-                //System.out.println("Data was:" + outputString);
+                String outputString = new String(data);
+                System.out.println("Data was:" + outputString);
+                
                 
                 //socketQueue.add(socket);
                 processor(data, dataLength);//Process data immediatel
@@ -137,8 +138,8 @@ public class TCPReceiver implements Runnable {
             dar.close();
         }
         catch (EOFException e){
-            //System.out.println("Temp type was: " + tempType);
-            //System.out.println("EOF");
+            System.out.println("Temp type was: " + tempType);
+            System.out.println("EOF");
 
             if (tempType != 99){
                 //System.out.println("We make ack");
@@ -167,36 +168,13 @@ public class TCPReceiver implements Runnable {
             System.exit(333);
             //System.out.println("DAta was: " + data.toString());
         }
-        catch (IllegalArgumentException e){
-           // System.out.println("What?");
-            System.exit(3343434);
-        }
+
         catch (IOException e){
             System.exit(3343434);
-            //System.out.println("Derp");
+            System.out.println("Derp");
         }
 
-        if (tempType != 99){
-            //System.out.println("We make ack");
-            int statusAck = -1;
-            Event synAck = EventFactory.createEvent(99);
-            String quickMessage = tempType + " " + dataLength;
-            //System.out.println(quickMessage);
-            synAck.setData(quickMessage);
-            try {
-                sendAck(synAck.getBytes(), 99);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            if(statusAck == 0){
-                //this was invalid we await the redo, return
-                System.out.println("Requesting new: ");
-                System.exit(3);
-                return;
-            }
-
-        }
+        
 
         tempData.setData(Temp);
 
@@ -208,6 +186,8 @@ public class TCPReceiver implements Runnable {
         dataQueue.add(newQueued);
 
         //all went well,synack out
+
+        System.out.println("Clean");
    
     }
 

@@ -34,6 +34,8 @@ public class peer {
         int regPortNumber = Integer.parseInt(args[1]); 
         String regHostname = (args[0]); 
 
+        
+
         String name = "MessagingNode"; 
         try {
 

@@ -22,6 +22,13 @@ public interface Protocol {
 
     int READY_WORK = 35;
 
+    int contactPEERINITIAL = 56;
+    int CONTACTPEERRESPONSE = 57;
+    int NOTIFYNEIGHBOR = 58;
+    int GIVEFINGERTABLE = 59;
+    int REQUESTTABLEINFO = 60;
+    int RESPONSETABLEINFO = 61;
+
     int LOAD_REQ_RESPOND = 66;
 
     int NODE_DONE = 34;

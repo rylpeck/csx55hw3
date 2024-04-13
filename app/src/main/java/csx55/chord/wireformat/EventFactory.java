@@ -11,6 +11,20 @@ public class EventFactory implements Protocol{
                 return new Register();
             case REGISTRATION_RESPONSE:
                 return new RegisterResponse();
+            case contactPEERINITIAL:
+                return new contactPeerInitial();
+            case CONTACTPEERRESPONSE:
+                return new contactPeerResponse();
+            case NOTIFYNEIGHBOR:
+                return new notifyNeighbor();
+            case REQUESTTABLEINFO:
+                return new RequestTableInfo();
+            case RESPONSETABLEINFO:
+                return new ResponseTableInfo();
+               
+
+            case GIVEFINGERTABLE:
+                return new giveFingerTable();
        
             case ACK:
                 return new Ack();

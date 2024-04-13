@@ -72,6 +72,7 @@ public class DataHandlerDiscovery extends DataHandler{
                 //Call to RegistryNode, let it do the work
                 break;
             case DEREGISTRATION_REQUEST:
+            
                 //number 4
             
                 //this.parent.deregisterRequest(currentEvent, currentSocket);

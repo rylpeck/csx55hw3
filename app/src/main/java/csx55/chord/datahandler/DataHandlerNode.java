@@ -64,7 +64,7 @@ public class DataHandlerNode extends DataHandler{
 
 
     protected void switchEvent(int type, String[][] data, connectionData con){
-       // System.out.println("HandlingSomething%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+       System.out.println("HandlingSomething%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         switch(type){
             case MESSAGE:
                 //System.out.println("MESSAGE RECIEVED");
@@ -76,51 +76,32 @@ public class DataHandlerNode extends DataHandler{
                 //this.nodeName = this.parent.myIP + ":" + this.parent.myPort;
                 break;
 
+            case contactPEERINITIAL:
+                parent.helpPeer(data, con);
+                break;
+            
+            case CONTACTPEERRESPONSE:
+                parent.progressAssignment(data, con);
+                break;
+
             case DEREGISTRATION_RESPONSE:
                 //parent.deregisterRespond(data, con.getSocket());
                 break;
-            
-            case ANOTHER_NODE:
-                //parent.makeMessengerCon(data, con);
+            case NOTIFYNEIGHBOR:
+                System.out.println("Neighbor request");
+                parent.recievedNeighbor(data, con);
+                break;
+            case GIVEFINGERTABLE:
+                parent.recievedFingerTable(data, con);
+                break;
+            case REQUESTTABLEINFO:
+                parent.handleTableQuery(data, con);
+                break;
+            case RESPONSETABLEINFO:
+                parent.responseTableInfo(data, con);
                 break;
 
-            case INFORM_NODES_MAP:
-                //System.out.println("Got an overlay registration");
-                //parent.overlayCreation(currentEvent);
-                
-                //parent.overlayCreation(data, sock);
-                break;
 
-            case START_ROUNDS:
-                //parent.startRounds(data);
-                break;
-
-            case MESSAGE_NODES_LIST:
-                System.out.println("THIS ONE");
-                //parent.setupConnections(data);
-                break;
-                
-            case RETRIEVE_TRAFFIC:
-                //parent.trafficReport();
-                break;
-            case NODE_LOAD_REPORT:
-                System.out.println("Node LOad");
-                //parent.passAlongPoll(data, myNodesName);
-                break;
-
-            case TASK_SEND:
-                System.out.println("Task send ONE");
-                //parent.handleIncomingTask(data);
-                break;
-           
-            case NODE_DONE:
-            System.out.println("DoneE");
-                //this.parent.addFinished(data, myNodesName);
-                break;
-
-            case READY_WORK:
-                //this.parent.RecievedReady(data);
-                break;
 
             default:
                 //System.out.println("Invalid response for Node");
