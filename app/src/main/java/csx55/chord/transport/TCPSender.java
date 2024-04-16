@@ -33,7 +33,7 @@ public class TCPSender{
     }
 
     public synchronized void sendMessage(byte[] dataToSend, int type) throws IOException {
-        System.out.println("Sending message: " + dataToSend);
+       // System.out.println("Sending message: " + dataToSend);
         
         int dataLength = dataToSend.length;
         this.responseLock = false;
@@ -64,7 +64,7 @@ public class TCPSender{
         
        // System.out.println("WAs fine");
         //dout.flush();
-        System.out.println("Done");
+        //System.out.println("Done");
         return;
     }
 

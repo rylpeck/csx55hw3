@@ -21,6 +21,22 @@ public class EventFactory implements Protocol{
                 return new RequestTableInfo();
             case RESPONSETABLEINFO:
                 return new ResponseTableInfo();
+            case VALIDATEFINGER:
+                return new validateFinger();
+            case VALIDATEFORWARD:
+                return new validateForward();
+            case VALIDATEFINGERRESPONSE:
+                return new validateFingerResponse();
+            case VALIDATEFORWARDRESPONSE:
+                return new validateForwardResponse();
+
+            case NEWPEER:
+                return new newPeer();
+
+            case REQUESTHASHlOCATION:
+                return new requestHashLocation();
+            case REQUESTHASHRESPONSE:
+                return new requestHashResponse();
                
 
             case GIVEFINGERTABLE:

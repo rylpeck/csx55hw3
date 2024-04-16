@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 public class peer {
 
-    private Node myNode;
+    private peerNode myNode;
     private Thread nodeThread = null;
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -105,13 +105,22 @@ public class peer {
 
     }
 
-    public static void clientCommandHandler(String command, Node node){
+    public static void clientCommandHandler(String command, peerNode node){
         String[] commandBroken = command.split("\\s+");
         
         switch (commandBroken[0].toString()){
             case "Cm":
+                System.out.println("CM");
                 node.showConnections();
                 break;
+            case "finger":
+                node.printFingerTable();
+                break;
+            case "validate":
+                node.doValidation();
+                break;
+            case "search":
+                node.searchSpot(commandBroken[1]);
 
             case "exit-overlay":
                 //deregister(mess);

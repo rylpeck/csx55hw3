@@ -62,12 +62,12 @@ public class TCPReceiver implements Runnable {
             
             try {
                 dataLength = this.din.readInt();
-                System.err.println("A length you say? " + dataLength);
+                //System.err.println("A length you say? " + dataLength);
                 data = new byte[dataLength];
                 din.readFully(data, 0, dataLength);
            
                 String outputString = new String(data);
-                System.out.println("Data was:" + outputString);
+                //System.out.println("Data was:" + outputString);
                 
                 
                 //socketQueue.add(socket);
@@ -187,7 +187,7 @@ public class TCPReceiver implements Runnable {
 
         //all went well,synack out
 
-        System.out.println("Clean");
+        //System.out.println("Clean");
    
     }
 

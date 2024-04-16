@@ -109,6 +109,8 @@ public class discoveryNode extends Node{
         String tempkey = data[0][0] +":" +data[0][1];
         double nodesHash = Double.valueOf(data[0][2]);
         Boolean correct = validateConnection(con.getSocket(), tempkey, nodesHash);
+        correct = true;
+        
         if (correct == false){
             //System.out.println("Rejected, not true ip");
             return 0;

@@ -28,8 +28,19 @@ public interface Protocol {
     int GIVEFINGERTABLE = 59;
     int REQUESTTABLEINFO = 60;
     int RESPONSETABLEINFO = 61;
+    int VALIDATEFINGER = 62;
+    int VALIDATEFORWARD = 63;
+    int VALIDATEFINGERRESPONSE = 64;
+    int VALIDATEFORWARDRESPONSE = 65;
 
     int LOAD_REQ_RESPOND = 66;
+
+    int NEWPEER = 67;
+    int REQUESTHASHlOCATION = 68;
+    int REQUESTHASHRESPONSE = 69;
+
+    
+
 
     int NODE_DONE = 34;
 

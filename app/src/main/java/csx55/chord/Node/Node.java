@@ -61,6 +61,8 @@ public class Node implements Runnable, Protocol{
     protected Thread  tcpRecThread = null;
     protected Thread tcpSendThread = null;
     protected TCPReceiverThread tcpRec = null;
+
+    public fingerTable myFingerTable = null;
     
 
     protected DataHandler datahandler = null;
@@ -82,6 +84,8 @@ public class Node implements Runnable, Protocol{
     public void showConnections(){
 
     }
+
+
 
     public void debug(){
         

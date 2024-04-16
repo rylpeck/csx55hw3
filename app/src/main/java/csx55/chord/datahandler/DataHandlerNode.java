@@ -64,7 +64,7 @@ public class DataHandlerNode extends DataHandler{
 
 
     protected void switchEvent(int type, String[][] data, connectionData con){
-       System.out.println("HandlingSomething%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+       //System.out.println("HandlingSomething%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         switch(type){
             case MESSAGE:
                 //System.out.println("MESSAGE RECIEVED");
@@ -77,11 +77,11 @@ public class DataHandlerNode extends DataHandler{
                 break;
 
             case contactPEERINITIAL:
-                parent.helpPeer(data, con);
+                parent.registerPeer(data, con);
                 break;
             
             case CONTACTPEERRESPONSE:
-                parent.progressAssignment(data, con);
+                parent.peerResponseRecieved(data, con);
                 break;
 
             case DEREGISTRATION_RESPONSE:
@@ -101,7 +101,32 @@ public class DataHandlerNode extends DataHandler{
                 parent.responseTableInfo(data, con);
                 break;
 
+            case VALIDATEFORWARD:
+                parent.validateForwardReply(data, con);
+                break;
 
+            case VALIDATEFORWARDRESPONSE:
+                parent.validateForwardRespond(data, con);
+                break;
+            
+            case VALIDATEFINGER:
+                parent.validateRandomReply(data, con);
+                break;
+
+            case VALIDATEFINGERRESPONSE:
+                parent.validationReturn(data, con);
+                break;
+            case REQUESTHASHlOCATION:
+                parent.requestHashLocation(data, con);
+                break;
+
+            case REQUESTHASHRESPONSE:
+                parent.requestHashResponse(data, con);
+                break;
+
+            case NEWPEER:
+                parent.newPeerRecieved(con, data);
+                break;
 
             default:
                 //System.out.println("Invalid response for Node");
