@@ -99,7 +99,17 @@ public class discoveryNode extends Node{
         sender.sendMessage(RegResponse.getBytes(), 1);
     }
         
-   
+    public void deregRequest(String[][]data, connectionData con){
+        String tempkey = data[0][0] +":" +data[0][1];
+        System.out.println("TEMPKEY WAS: " + tempkey);
+        System.out.println("REMOVED");
+        if (NodesList.containsKey(tempkey)){
+            //System.out.println("Rejected");
+            //Key is already on stack, reject
+            NodesList.remove(tempkey);
+        }
+
+    }
 
 
     public int registerRequest(String [][]data, connectionData con) throws IOException{
@@ -129,7 +139,7 @@ public class discoveryNode extends Node{
             registerResponse(con, 0);
 
             //we now use the hashkey to store it
-            this.NodesList.put(data[0][2], con);
+            this.NodesList.put(tempkey, con);
         }
         //Key is just ipstring+node
         //System.out.println("Processed request");

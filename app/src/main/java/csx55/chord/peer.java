@@ -119,10 +119,19 @@ public class peer {
             case "validate":
                 node.doValidation();
                 break;
-            case "search":
-                node.searchSpot(commandBroken[1]);
+            case "neighbors":
+                node.printNeighbors();
+                break;
+            case "upload":
+                node.sendFile(commandBroken[1]);
+                break;
+            case "download":
+                node.downloadFile(commandBroken[1]);
+                break;
 
-            case "exit-overlay":
+            case "exit":
+                node.exitGracefully();
+                System.exit(3);
                 //deregister(mess);
                 break;
         }

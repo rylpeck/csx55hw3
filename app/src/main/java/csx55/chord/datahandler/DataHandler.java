@@ -64,12 +64,12 @@ public class DataHandler implements Runnable, Protocol{
         String[][] data = currentEvent.giveData();
         int type = currentEvent.getType();
         //System.out.println(type);
-        switchEvent(type, data, curCon);
+        switchEvent(type, data, curCon, currentOBJ.getBytes());
         //each thing will have its own switch event
     
     }
 
-    protected void switchEvent(int type, String[][] data, connectionData con){
+    protected void switchEvent(int type, String[][] data, connectionData con, byte[] fileData){
         //to be overloaded by the class
     }
     

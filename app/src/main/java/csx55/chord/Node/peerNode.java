@@ -15,9 +15,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
 
 import csx55.chord.wireformat.*;
 import csx55.chord.transport.*;
@@ -39,7 +41,7 @@ public class peerNode extends Node {
     private volatile String myName;
     private double myHash;
 
-    private fingerTable myFingerTable;
+    public fingerTable myFingerTable;
 
     public connectionData myForwardCon = null;
     public connectionData myBackwardCon = null;
@@ -55,14 +57,15 @@ public class peerNode extends Node {
 
     fingerUpdater fingerupdater = null;
     Thread fingerUpdaterThread = null;
+    fileManager myFileManager = null;
 
-    String fileToSend = "";
+    public String fileToSend = "";
 
 
     public peerNode(String ip, int port, String reghost, int regpot){
         this.myIP = ip;
         this.myPort = port;
-        System.out.println("hi");
+        //System.out.println("hi");
         this.myName = "peerNode";
 
         this.connectionsMap = new HashMap<String, connectionData>();
@@ -83,6 +86,7 @@ public class peerNode extends Node {
         this.regHostName = reghost;
         this.regPortNumber = regpot;
         this.myFingerTable = new fingerTable(this);
+        
 
         //TCPReceiverThread tcpt = new TCPReceiverThread(this.mySocket, dataQueue, this);
         //Thread tcpThread = new Thread(tcpt);
@@ -101,6 +105,7 @@ public class peerNode extends Node {
         setupThreads();
         setupRegisterConnection();
         register();
+        this.myFileManager = new fileManager(this.myHash, this);
         this.fingerUpdaterThread.start();
 
     }
@@ -129,10 +134,10 @@ public class peerNode extends Node {
             }
             else{
                 //this.name = data[0][1];
-                //System.out.println("We are now named: "+ this.name);
+                System.out.println("We are now named: " + this.myName);
                 System.out.println("I will find this: " + data[0][2]);
                 if (data[0][2].equals("yay")){
-                    System.out.println("NVM I AM FIRST NODE LETS MAKE OUR TABLE JANK");
+                    //System.out.println("NVM I AM FIRST NODE LETS MAKE OUR TABLE JANK");
                     this.myFingerTable.defaultSetup(myHash, myIP);
                 }
                 else{
@@ -177,8 +182,8 @@ public class peerNode extends Node {
             e.printStackTrace();
         }
 
-        System.out.println("Contact done");
-        this.myFingerTable.printTable();
+        //System.out.println("Contact done");
+        //this.myFingerTable.printTable();
     }
 
 
@@ -187,7 +192,7 @@ public class peerNode extends Node {
 
     public void handleClose(Socket socket){
         //System.out.println("Handle close");
-        System.exit(2);
+        //System.exit(2);
         
         synchronized (registerLock) {
 
@@ -245,17 +250,17 @@ public class peerNode extends Node {
     //peer has asked for help on where to go, we assist
     public void registerPeer(String [][] data, connectionData con){
 
-        System.out.println("Peer has asked for registration: " + data[0][0]);
+        ///System.out.println("Peer has asked for registration: " + data[0][0]);
 
         TCPSender sender = con.getTcpSender();
         Event helpResponse = EventFactory.createEvent(CONTACTPEERRESPONSE);
         //this meerly returns the locationhash, not the id, be careful
         String nextNode = this.myFingerTable.determineSpot(Double.valueOf(data[0][0]));
-        System.out.println(nextNode);
+//System.out.println(nextNode);
         //loop, only one current node in the ssytem, default setup.
         if (nextNode.equals("0")){
             //default setup, it becomes the next regardless, and we point it to us.
-            System.out.println("loop setup thank you for being second");
+            //System.out.println("loop setup thank you for being second");
             String response = 0 + " " + this.myName+ " " + this.myHash;
             helpResponse.setData(response);
             
@@ -265,7 +270,7 @@ public class peerNode extends Node {
         }
         else if(nextNode.equals("1")){
             //this node is then behind me and my last node, so lets just plop it in.
-            System.out.println("we are the new forward for this node.");
+           // System.out.println("we are the new forward for this node.");
             String response = 1 +  " " + this.myName + " " + this.myHash + " "  + this.myBackwardCon.getName() + " " +this.backHash;
             this.myBackwardCon = con;
             this.backHash = Double.valueOf(data[0][0]);
@@ -273,27 +278,27 @@ public class peerNode extends Node {
         }
         else if(nextNode.equals("2")){
             //its in our front range, give it our front node, and our own data just in case
-            System.out.println("we are the new forward for this node.");
+           // System.out.println("we are the new forward for this node.");
             String response = 2 +  " " + this.myName + " " + this.myHash + " "  + this.myForwardCon.getName() + " " +this.forwardHash;
             helpResponse.setData(response);
         }
         else {
             //this means its not even in our range, we send it to the max value instead to just get it out of our hari
-            System.out.println("didnt find it, try to get it closer");
+           // System.out.println("didnt find it, try to get it closer");
             nextNode = this.myForwardCon.getName();
-            System.out.println("I am : " + this.giveName());
-            System.out.println("go here + " + nextNode);
-            System.out.println("My hash : " + giveHash());
+           // System.out.println("I am : " + this.giveName());
+           // System.out.println("go here + " + nextNode);
+           // System.out.println("My hash : " + giveHash());
             String response = 3 + " " + nextNode;
             helpResponse.setData(response);
             //default telling us to keep going
         }
 
         try {
-            System.out.println(con.getIP() + " " + con.getPort());
+           // System.out.println(con.getIP() + " " + con.getPort());
             sender.sendMessage(helpResponse.getBytes(), CONTACTPEERRESPONSE);
             
-            System.out.println("Sent message");
+            //System.out.println("Sent message");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -302,6 +307,8 @@ public class peerNode extends Node {
         //this.myFingerTable.validateFingerTable();
         
     }
+
+    
 
 
     //help peer will be answered by peerresponserecieved
@@ -366,18 +373,19 @@ public class peerNode extends Node {
 
         //this one is a default setup of a loop
         if (data[0][0].equals("0")){
-            System.out.println("Setup of 0");
-            System.out.println("Default setup (loop)");
+            //System.out.println("Setup of 0");
+           // System.out.println("Default setup (loop)");
             this.myBackwardCon = tempCon;
             this.forwardHash = Double.valueOf(data[0][2]);
             this.myForwardCon = tempCon;
+            this.myFileManager.backTransfer();
             this.backHash = Double.valueOf(data[0][2]);
             communicateChanges();
             this.myFingerTable.validateFingerTable();
         }
         //a one means that we are behind that node, its now our forward, and gave us our backwards
         else if (data[0][0].equals("1")){
-            System.out.println("Setup of 1");
+           // System.out.println("Setup of 1");
             this.myBackwardCon = tempCon;
             String [] split = data[0][3].split(":");
             this.myForwardCon = con;
@@ -390,7 +398,7 @@ public class peerNode extends Node {
         //a 2 means that we are in front of it, and it gave us its forward to now hook between :)
         else if (data[0][0].equals("2")){
             //THIS SHOULD NEVER BE CALLED
-            System.out.println("Setup of 2");
+           // System.out.println("Setup of 2");
             this.myBackwardCon = tempCon;
             String [] split = data[0][3].split(":");
             this.myBackwardCon = con;
@@ -398,6 +406,7 @@ public class peerNode extends Node {
             //its now our back
             this.myForwardCon = makeConnection(split[0], Integer.valueOf(split[1]));
             this.forwardHash = Double.valueOf(data[0][4]);
+            this.myFileManager.backTransfer();
             communicateChanges();
         }
         //else we didnt find it, and its telling me on my way
@@ -410,8 +419,8 @@ public class peerNode extends Node {
     //this method talks to recieved neighbor
     public void communicateChanges(){
         //hashcode creation
-        System.out.println("Hey");
-        System.out.println("|" + this.myForwardCon.getName() + "|");
+        //System.out.println("Hey");
+        //System.out.println("|" + this.myForwardCon.getName() + "|");
 
         //determine which one has the better table to grab from
         if (this.backHash == this.forwardHash){
@@ -422,14 +431,14 @@ public class peerNode extends Node {
         notifyNeighbor(this.myBackwardCon, 1);
         notifyNeighbor(this.myForwardCon, 2);
         newPeer(this.myForwardCon);
-        System.out.println("Done notifying neighbors");
+        //System.out.println("Done notifying neighbors");
         this.myFingerTable.validateFingerTable();
-        this.myFingerTable.printTable();
+        //this.myFingerTable.printTable();
     }
 
     public void newPeer(connectionData con){
         //this will always creep forward notifying of a new peer in the system.
-        System.out.println("Creep");
+        //System.out.println("Creep");
         Event notify = EventFactory.createEvent(NEWPEER); 
         TCPSender sender = con.getTcpSender();
         String arguments = this.myName;
@@ -443,7 +452,7 @@ public class peerNode extends Node {
     }
 
     public void newPeerRecieved(connectionData con, String [][]data){
-        System.out.println("NEW PEER RECIEVED");
+        //System.out.println("NEW PEER RECIEVED");
         if (data[0][0].equals(this.myName)){
             //i sent this, woot
         }
@@ -481,13 +490,13 @@ public class peerNode extends Node {
 
 
     public void recievedNeighbor(String [][] data, connectionData con){
-        System.out.println("I have a new neighbor");
-        System.out.println(data[0][0]);
+        //System.out.println("I have a new neighbor");
+        //System.out.println(data[0][0]);
         con.setName(data[0][1]);
         if (data[0][0].equals("3")){
             //loop, first one added after meeee
             //the node talking to us is behind us! lets give them our data
-            System.out.println("They want my table too!");
+            //System.out.println("They want my table too!");
             con.setName(data[0][1]);
             this.myBackwardCon = con;
             this.myForwardCon = con;
@@ -496,12 +505,12 @@ public class peerNode extends Node {
             //sendMyTable();
             this.myFingerTable.updateTableNeighbors();
             //this.myFingerTable.printTable();
-            System.out.println("initial communication right");
+            //System.out.println("initial communication right");
         }
 
         if (data[0][0].equals("2")){
             //the node talking to us is behind us! lets give them our data
-            System.out.println("They want my table too!");
+            //System.out.println("They want my table too!");
             this.myBackwardCon = con;
             double oldHash = this.backHash + 0;
             this.backHash = Double.valueOf(data[0][2]);
@@ -510,7 +519,7 @@ public class peerNode extends Node {
             //this.myFingerTable.printTable();
         }
         else{
-            System.out.println("its ahead of me");
+            //System.out.println("its ahead of me");
             //theyre cutting ahead of me, lets recalculate a little
             this.myForwardCon = con;
             this.forwardHash = Double.valueOf(data[0][2]);
@@ -520,7 +529,7 @@ public class peerNode extends Node {
 
     public void sendMyTable(){
         //will always be using our back way
-        System.out.println("lets send my table");
+        //System.out.println("lets send my table");
         String fingerTable = this.myFingerTable.giveFingerTable();
         Event giveFinger = EventFactory.createEvent(GIVEFINGERTABLE);
         giveFinger.setData(fingerTable);
@@ -531,7 +540,7 @@ public class peerNode extends Node {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        this.myFingerTable.printTable();
+        //this.myFingerTable.printTable();
     }
 
     public void handleTableQuery(String[][]data, connectionData con){
@@ -546,8 +555,8 @@ public class peerNode extends Node {
 
     public void queryForTable(String address, String message){
         //will only be doing the table requests, nothing more.
-        System.out.println("I will be messaging: " + address);
-        System.out.println("With the string of : " + message);
+        //System.out.println("I will be messaging: " + address);
+        //System.out.println("With the string of : " + message);
         String [] broken = address.split(":");
         Socket tempSock;
         try {
@@ -570,8 +579,8 @@ public class peerNode extends Node {
     }
 
     public void recievedFingerTable(String [][] data, connectionData con){
-        System.out.println("We got a finger table! lets math it up to be ours");
-        System.out.println(data);
+        //System.out.println("We got a finger table! lets math it up to be ours");
+       // System.out.println(data);
         ArrayList<chord> tempFingerTable = new ArrayList<chord>();
 
         this.myFingerTable.generateOnlyTable(this.myHash, this.myIP);
@@ -580,15 +589,13 @@ public class peerNode extends Node {
         int note = 1;
         for (int i = 0; i < 15; i += 3) {
             double temp = this.forwardHash + (Math.pow(2, note - 1));
-            while (temp > 31) {
-                temp = temp - 31;
-            }
+            temp = this.myFingerTable.normalize(temp);
             ////while (temp > 2147483647) {
            //     temp = temp - 2147483647;
            // }
-            System.out.println(data[0][i]);
-            System.out.println(data[0][i + 1]);
-            System.out.println(data[0][i + 2]);
+           // System.out.println(data[0][i]);
+            //System.out.println(data[0][i + 1]);
+           // System.out.println(data[0][i + 2]);
             
             chord tempChord = new chord(Double.valueOf(data[0][i + 2]), String.valueOf(data[0][i + 1]));
             tempChord.setPosition(Double.valueOf(data[0][i]));
@@ -601,10 +608,10 @@ public class peerNode extends Node {
 
         int spot = 1;
         
-        System.out.println("Temp table as follows");
+        //System.out.println("Temp table as follows");
         for (chord c : tempFingerTable) {
 
-            System.out.println(c.getPosition() + " " + c.getHash());
+            //System.out.println(c.getPosition() + " " + c.getHash());
             spot++;
         }
 
@@ -655,8 +662,8 @@ public class peerNode extends Node {
     public void validateForwardReply(String [][]data, connectionData con){
         Event validateForwardResponse = EventFactory.createEvent(VALIDATEFORWARDRESPONSE);
         //this will always come from behind us, lets verify
-        System.out.println("Back hash is : " + this.backHash);
-        System.out.println();
+        //System.out.println("Back hash is : " + this.backHash);
+        //System.out.println();
         if (this.backHash == -1){
             //lets accept him and double check just to make sure
             this.backHash = Double.valueOf(data[0][1]);
@@ -665,22 +672,22 @@ public class peerNode extends Node {
             this.myBackwardCon.setName(data[0][0]);
             String arguments = "0"; //all good
             validateForwardResponse.setData(arguments);
-            System.out.println("now ours");
+            //System.out.println("now ours");
             
         }
         else if (this.myBackwardCon.getName().equals(data[0][0])){;
             String arguments = "0"; //all good
             validateForwardResponse.setData(arguments);
-            System.out.println("Still ours");
-            this.myFingerTable.printTable();
+           // System.out.println("Still ours");
+           // this.myFingerTable.printTable();
             //still ours
         }        
         else{
             //we send back our new behind, and then it figures it out
-            System.out.println("Nope go somewhere else now");
+            ///System.out.println("Nope go somewhere else now");
             String arguments = "1 " + this.myBackwardCon.getName() + " " + this.backHash; 
             validateForwardResponse.setData(arguments);
-            this.myFingerTable.printTable();
+            //this.myFingerTable.printTable();
         }
         try {
             con.getTcpSender().sendMessage(validateForwardResponse.getBytes(), VALIDATEFORWARDRESPONSE);
@@ -697,16 +704,16 @@ public class peerNode extends Node {
             //all good
         }
         else{
-            System.out.println("WE HAVE CHANGED OUR BACK POINTER NOW");
+           // System.out.println("WE HAVE CHANGED OUR BACK POINTER NOW");
 
-            System.out.println("Going to go to : " + data[0][1]);
+           //System.out.println("Going to go to : " + data[0][1]);
             //we must quest to find our new forward!
-            this.myFingerTable.printTable();
+            //this.myFingerTable.printTable();
             String [] broken  = data[0][1].split(":");
             tempCon = makeConnection(broken[0], Integer.valueOf(broken[1]));
             this.myForwardCon = tempCon;
             this.forwardHash = Double.valueOf(data[0][2]);
-            System.out.println("New forward is: " + this.forwardHash);
+            //System.out.println("New forward is: " + this.forwardHash);
             validateForward();
         }
     }
@@ -719,18 +726,93 @@ public class peerNode extends Node {
         this.myFingerTable.validateFingerTable();
     }
 
+    public void caughtFile(String[][]data, connectionData con, byte[] fileData){
+        this.myFileManager.writeTheFileBytes(data, fileData);
+    }
+
+    public void downloadRequest(String[][]data, connectionData con){
+       // System.out.println("Validating position");
+        //System.out.println(data[0][0] + " is asking about us storing " + data[0][1]);
+        double hashOffile = data[0][1].hashCode();
+        
+        if (this.myFingerTable.backwardRange(Double.valueOf(hashOffile)) == true){
+            Event validateFinger = EventFactory.createEvent(DOWNLOADFILERESPONSE);
+            //we should
+            String arguments = "";
+            //String arguments = data[0][1] + " " + this.giveName();
+            //////////////////////////////////////////
+            if (this.myFileManager.doIhaveThisFile(data[0][1])){
+                //if we do have this
+                for (int i =0; i < data[0].length; i++){
+                    arguments = arguments + data[0][i] + " ";
+                }
+                arguments = arguments + this.giveName();
+                validateFinger.setData(arguments);
+                //System.out.println("We do");
+                //then send it
+                this.myFileManager.sendTheFileBytes(data[0][0], data[0][1]);
+
+            }
+            else{
+                arguments = "error " + data[0][1];
+                validateFinger.setData(arguments);
+                //System.out.println("do not");
+
+            }
+
+
+            String [] brokenString = data[0][0].split(":");
+            connectionData tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
+            try {
+                tempCon.getTcpSender().sendMessage(validateFinger.getBytes(), DOWNLOADFILERESPONSE);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        else{
+            Event validateFinger = EventFactory.createEvent(DOWNLOADFILE);
+
+           // System.out.println("We do not!");
+           // int realspot = this.myFingerTable.findHighestLowest(Double.valueOf(data[0][1]));
+            connectionData tempCon = null;
+
+            String [] brokenString= this.myForwardCon.getName().split(":");
+            tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
+           // System.out.println("pass it forward");
+            //String [] broken  = randomChord.getAddress().split(":");
+            String arguments = "";
+            for (int i =0; i < data[0].length; i++){
+                arguments = arguments + data[0][i] + " ";
+            }
+            arguments = arguments + this.giveName();
+            //String arguments = data[0][0] + " " + data[0][1];
+            validateFinger.setData(arguments);
+
+            try {
+                tempCon.getTcpSender().sendMessage(validateFinger.getBytes(), DOWNLOADFILE);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
 
 
     public void requestHashLocation(String[][]data, connectionData con){
-        System.out.println("Validating position");
-        System.out.println(data[0][0] + " is asking about us storing" + data[0][1]);
+        //System.out.println("Validating position");
+        //System.out.println(data[0][0] + " is asking about us wanting to store" + data[0][1]);
         
         if (this.myFingerTable.backwardRange(Double.valueOf(data[0][1])) == true){
             Event validateFinger = EventFactory.createEvent(REQUESTHASHRESPONSE);
             //we totally do
             String arguments = data[0][1] + " " + this.giveName();
             validateFinger.setData(arguments);
-            System.out.println("We do");
+            //System.out.println("We do");
             String [] brokenString = data[0][0].split(":");
             connectionData tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
             try {
@@ -743,13 +825,13 @@ public class peerNode extends Node {
         else{
             Event validateFinger = EventFactory.createEvent(REQUESTHASHlOCATION);
 
-            System.out.println("We do not!");
+            //System.out.println("We do not!");
            // int realspot = this.myFingerTable.findHighestLowest(Double.valueOf(data[0][1]));
             connectionData tempCon = null;
 
             String [] brokenString= this.myForwardCon.getName().split(":");
             tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
-            System.out.println("pass it forward");
+            //System.out.println("pass it forward");
             //String [] broken  = randomChord.getAddress().split(":");
             String arguments = data[0][0] + " " + data[0][1];
             validateFinger.setData(arguments);
@@ -770,9 +852,9 @@ public class peerNode extends Node {
     //above method we respond to on another node
     public void validateRandomReply(String [][]data, connectionData con){
         //someone has asked us if we currently hold this spot, lets check.
-        printFingerTable();
-        System.out.println("Validating position");
-        System.out.println(data[0][0] + " is asking about us holding" + data[0][1]);
+        //printFingerTable();
+        //System.out.println("Validating position");
+        //System.out.println(data[0][0] + " is asking about us holding" + data[0][1]);
         if (data[0][0].equals(this.giveName())){
             System.out.println("loop prevention");
             return;
@@ -784,7 +866,7 @@ public class peerNode extends Node {
             //we totally do
             String arguments = data[0][1] + " " + this.giveName() + " " + this.giveHash() + " " + data[0][2];
             validateFinger.setData(arguments);
-            System.out.println("We do");
+            //System.out.println("We do");
             String [] brokenString= data[0][0].split(":");
             connectionData tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
             try {
@@ -797,13 +879,13 @@ public class peerNode extends Node {
         else{
             Event validateFinger = EventFactory.createEvent(VALIDATEFINGER);
 
-            System.out.println("We do not!");
+            //System.out.println("We do not!");
            // int realspot = this.myFingerTable.findHighestLowest(Double.valueOf(data[0][1]));
             connectionData tempCon = null;
 
             String [] brokenString= this.myForwardCon.getName().split(":");
             tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
-            System.out.println("pass it forward");
+            //System.out.println("pass it forward");
             //String [] broken  = randomChord.getAddress().split(":");
             String arguments = data[0][0] + " " + data[0][1] + " " + data[0][2];
             validateFinger.setData(arguments);
@@ -847,53 +929,209 @@ public class peerNode extends Node {
     }
 
     public void validationReturn(String [][] data, connectionData con){
-        System.out.println("Validating the validation");
+        //System.out.println("Validating the validation");
         if (data[0][0].equals("0")){
             //all good bb
-            System.out.println("THIS ENTRY WAS VALID");
+            //System.out.println("THIS ENTRY WAS VALID");
         }
         else{
 
             //we go deeper, we do not meerly accept what it says
 
 
-            System.out.println(data[0][0]);
-            System.out.println("updated my table!");
-            System.out.println("Re-fixing: " + data[0][3]);
+            //System.out.println(data[0][0]);
+           // System.out.println("updated my table!");
+            //System.out.println("Re-fixing: " + data[0][3]);
             chord randomChord = this.myFingerTable.giveEntry(Integer.valueOf(data[0][3]));
-            System.out.println("Finger of : " + randomChord.getHash() + " Says had holds : " + randomChord.getPosition());
-            System.out.println("changing to be: " );
+           // System.out.println("Finger of : " + randomChord.getHash() + " Says had holds : " + randomChord.getPosition());
+           // System.out.println("changing to be: " );
             randomChord.setAddresss(data[0][1]);
             randomChord.setHash(Double.valueOf(data[0][2]));
-            System.out.println("Finger of : " + randomChord.getHash() + " Says had holds : " + randomChord.getPosition());
+            //System.out.println("Finger of : " + randomChord.getHash() + " Says had holds : " + randomChord.getPosition());
 
             
             this.myFingerTable.setEntry(Integer.valueOf(data[0][3]), randomChord);
 
         }
 
-        this.myFingerTable.printTable();
+        //this.myFingerTable.printTable();
+
+
+    }
+    
+    public double checkHash(double hash){
+        if (hash < 0){
+            double temp = -1 * hash;
+            //hashedName = (-1.0 * hashedName) + 2147483647;
+            hash = (temp + 2147483647);
+        }
+        return hash;
+    }
+
+
+    public void sendFile(String pathtofile){
+        //System.out.println("Preparing to send file");
+        //System.out.println("Getting name");
+        String filename = this.myFileManager.getFileName(pathtofile);
+        //System.out.println("File name is: " + filename);
+        double fileHash = checkHash(filename.hashCode());
+        //System.out.println("hash will be: " + fileHash);
+        searchSpot(fileHash);
+        this.fileToSend = pathtofile;
+        //fileTosend
+        //.hashCode();
+        //searchSpot();
+
+    }
+
+    //respond and tell us where its been jerry!
+    public void downloadfileResponse(String[][]data, connectionData con){
+        //System.out.println("download response");
+
+        if (data[0][0].equals("error")){
+            System.out.println("Error, the file was not found at the node, DNE");
+        }
+        else{
+            System.out.println("Found the file successfully! Downloading now");
+            for (int i = 2; i < data[0].length; i++){
+                System.out.println("Traveled path as follows: ");
+                System.out.println(data[0][i]);
+            }
+        }
+        //done downloading it
+
+    }
+
+    public void migratebellow(){
+        //if a new node joins as our behind, our new back, we transfer to it all data that is now udner its domain
+        if (this.myFileManager.listMyFolder() == 0){
+
+            //we have files do stuff
+        }
+    }
+
+
+
+    public void exitGracefully(){
+        //command to gracefully exit
+        //shove all data at the node in front of us, no regrets
+        this.myFileManager.throwAllForward();
+        //notify my adjacent nodes
+        notifyLeaving();
+        notifyDiscover();
+        System.out.println("LEAVE ME");
+        System.exit(69);
+    }
+
+    public void notifyDiscover(){
+        System.out.println("notfiyng king");
+        TCPSender sender = this.register.getTcpSender();
+        //4 is deregistration event
+        Event dereg = EventFactory.createEvent(DEREGISTRATION_REQUEST);
+        String arguments = (this.myIP + " " + this.myPort);
+        dereg.setData(arguments);
+        System.out.println("notfiyng king");
+        try {
+            sender.sendMessage(dereg.getBytes(), DEREGISTRATION_REQUEST);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void printNeighbors(){
+        System.out.println("Predecessor: " + this.backHash + " " + this.myBackwardCon.getName());
+        System.out.println("Successor: " + this.forwardHash + " " + this.myForwardCon.getName());
+    }
+
+    public void printFiles(){
+        this.myFileManager.listMyFolder()
+    }
+
+    
+
+    private void notifyLeaving(){
+        //System.out.println("Notifying leaving");
+        //tell forward node and backnode they have new conections
+        Event leaving = EventFactory.createEvent(LEAVINGCHORD);
+        
+        //notify forward
+        
+        //give it the data and send it to my forward
+        try {
+
+            String arguments = (this.myBackwardCon.getName() + " " + this.backHash);
+            leaving.setData(arguments);
+
+            this.myForwardCon.getTcpSender().sendMessage(leaving.getBytes(), LEAVINGCHORD);
+
+            Event leaving2 = EventFactory.createEvent(LEAVINGCHORD);
+            leaving2.setData(this.myForwardCon.getName()+ " " + this.backHash);
+            this.myBackwardCon.getTcpSender().sendMessage(leaving2.getBytes(), LEAVINGCHORD);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+
+            e.printStackTrace();
+        }
 
 
     }
 
-    public void sendFile(String pathtofile){
-        //.hashCode();
+    public void recievedleaving(String[][]data, connectionData con){
+        System.out.println("node is leaving");
 
+        if (con == myBackwardCon){
+            //it was my backward con
+            //System.out.println("MYBACKCON");
+            String[]brokenString = data[0][0].split(":");
+            connectionData tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
+            this.myBackwardCon = tempCon;
+            this.backHash = Double.valueOf(data[0][1]);
 
+            notifyNeighbor(this.myBackwardCon, 1);
+
+            this.myFingerTable.validateFingerTable();
+            //newPeer(this.myForwardCon);
+        }
+        else{
+            //else its my forward con
+            //System.out.println("MYFRONGCON");
+            String[]brokenString = data[0][0].split(":");
+            connectionData tempCon = peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
+            this.myForwardCon = tempCon;
+            this.forwardHash = Double.valueOf(data[0][1]);
+
+            notifyNeighbor(myForwardCon, 2);
+
+            this.myFingerTable.validateFingerTable();
+            newPeer(this.myBackwardCon);
+        }
+
+        
+    }
+
+    public void downloadFile(String nameOfFile){
+        //System.out.println("Searching for file");
+        this.myFingerTable.searchForFile(nameOfFile);
     }
 
     public void searchSpot(double hash){
         //look for this hash
         this.myFingerTable.searchForThisHash(hash);
 
-
     }
 
     public void requestHashResponse(String[][]data, connectionData con){
         System.out.println("This one says its got our node we requested : " + data[0][1]);
         //great lets send it to them then
-
+        //this.myFileManager.sendTheFileString(data[0][1], this.fileToSend);
+        this.myFileManager.sendTheFileBytes(data[0][1], this.fileToSend);
 
     }
 
@@ -917,18 +1155,24 @@ public class peerNode extends Node {
         this.myName = this.myIP +":" + this.myPort;
 
         double hashedName = this.myName.hashCode();
-        System.out.println("basic: " + hashedName);
+        //System.out.println("basic: " + hashedName);
 
 
         if (hashedName < 0){
-            hashedName = (-hashedName) + 2147483647;
+           // System.out.println("Invert");
+            //System.out.println(-1 * hashedName);
+            double temp = -1 * hashedName;
+            //hashedName = (-1.0 * hashedName) + 2147483647;
+           // System.out.println((temp) + 2147483647);
+            hashedName = (temp + 2147483647);
         }
+        this.myHash = hashedName;
 
-        Random random = new Random();
+       // Random random = new Random();
         
         // Generate a random 5-bit number
-        int randomNumber = random.nextInt(32);
-        this.myHash = randomNumber;
+        //int randomNumber = random.nextInt(32);
+        //this.myHash = randomNumber;
         System.out.println("my hash <3 " + this.myHash);
       
         String arguments = (this.myIP + " " + this.myPort + " " + this.myHash);

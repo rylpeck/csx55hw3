@@ -38,6 +38,11 @@ public interface Protocol {
     int NEWPEER = 67;
     int REQUESTHASHlOCATION = 68;
     int REQUESTHASHRESPONSE = 69;
+    int SENDFILE = 70;
+
+    int DOWNLOADFILE = 71;
+    int DOWNLOADFILERESPONSE =72;
+    int LEAVINGCHORD = 73;
 
     
 

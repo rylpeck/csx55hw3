@@ -66,7 +66,7 @@ public class TCPReceiver implements Runnable {
                 data = new byte[dataLength];
                 din.readFully(data, 0, dataLength);
            
-                String outputString = new String(data);
+                //String outputString = new String(data);
                 //System.out.println("Data was:" + outputString);
                 
                 
@@ -128,6 +128,23 @@ public class TCPReceiver implements Runnable {
                 return;
             }
 
+            tempData.setData(Temp);
+
+            queueObject newQueued = new queueObject(tempData, this.con);
+            if (tempType == 70){
+                System.out.println("yay");
+                int length2 = dar.readInt();
+                byte[] messageBytes2 = new byte[length2];
+                dar.readFully(messageBytes2);    
+                newQueued.setBytes(messageBytes2);
+            }
+
+            
+                //tempType = din.readInt();
+                //System.out.println(tempType);
+                //System.out.println(tempData.giveData());
+            dataQueue.add(newQueued);
+
             //System.out.println("What we got: " + Temp + "|");
             //System.out.println("End of got");
 
@@ -176,14 +193,7 @@ public class TCPReceiver implements Runnable {
 
         
 
-        tempData.setData(Temp);
-
-        queueObject newQueued = new queueObject(tempData, this.con);
-          
-            //tempType = din.readInt();
-            //System.out.println(tempType);
-            //System.out.println(tempData.giveData());
-        dataQueue.add(newQueued);
+        
 
         //all went well,synack out
 

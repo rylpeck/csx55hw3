@@ -53,7 +53,7 @@ public class DataHandlerDiscovery extends DataHandler{
     }
 
 
-    protected synchronized void switchEvent(int type, String[][] data, connectionData con){
+    protected synchronized void switchEvent(int type, String[][] data, connectionData con, byte[] fileData){
         //System.out.println("Type in handler: " + type);
         switch(type){
             case MESSAGE:
@@ -73,10 +73,10 @@ public class DataHandlerDiscovery extends DataHandler{
                 //Call to RegistryNode, let it do the work
                 break;
             case DEREGISTRATION_REQUEST:
-            
+                
                 //number 4
             
-                //this.parent.deregisterRequest(currentEvent, currentSocket);
+                this.parent.deregRequest(data, con);
                 break;
            
             case FINISHED_ROUNDS:

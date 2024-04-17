@@ -63,7 +63,7 @@ public class DataHandlerNode extends DataHandler{
     }
 
 
-    protected void switchEvent(int type, String[][] data, connectionData con){
+    protected void switchEvent(int type, String[][] data, connectionData con, byte[] fileData){
        //System.out.println("HandlingSomething%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         switch(type){
             case MESSAGE:
@@ -127,6 +127,20 @@ public class DataHandlerNode extends DataHandler{
             case NEWPEER:
                 parent.newPeerRecieved(con, data);
                 break;
+
+            case LEAVINGCHORD:
+                parent.recievedleaving(data, con);
+                break;
+
+            case SENDFILE:
+                parent.caughtFile(data, con, fileData);
+                break;
+
+            case DOWNLOADFILE:
+                parent.downloadRequest(data, con);
+                break;
+            case DOWNLOADFILERESPONSE:
+                parent.downloadfileResponse(data, con);
 
             default:
                 //System.out.println("Invalid response for Node");

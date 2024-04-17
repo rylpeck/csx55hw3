@@ -11,10 +11,19 @@ public class queueObject {
 
     private Event event;
     private connectionData con;
+    private byte[] bytes;
 
     public queueObject(Event e, connectionData s){
         this.event = e;
         this.con = s;
+    }
+
+    public byte[] getBytes(){ 
+        return this.bytes;
+    }
+
+    public void setBytes(byte[] byter){
+        this.bytes = byter;
     }
 
     public connectionData getConnectionData(){

@@ -67,6 +67,38 @@ public interface Event{
         return marshalledBytes;
     }
 
+    default byte[] gatherDataByted(String [][]data, byte[] filedata){
+        byte[] marshalledBytes = null;
+        ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
+
+        try {
+            int temp = getType();
+            dout.writeInt(temp);
+        
+            long timeStamp = Instant.now().toEpochMilli();
+            dout.writeLong(timeStamp);
+
+            String message = stringBuilder(data);
+
+            byte[] messageBytes = message.getBytes();
+            int messageLength = messageBytes.length;
+            dout.writeInt(messageLength);
+            dout.write(messageBytes);
+
+            dout.flush();
+            marshalledBytes = baOutputStream.toByteArray();
+            //baOutputStream.close();
+            //dout.close();
+
+        } catch (IOException e) {
+            System.err.println("ERROR MARSHALLING");
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return marshalledBytes;
+    }
+
     default String[] deepCopyArray(String[] array, int start, int end) {
         int length = end - start;
         String[] newArray = new String[length];

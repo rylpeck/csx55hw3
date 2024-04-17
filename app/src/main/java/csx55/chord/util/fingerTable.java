@@ -24,6 +24,7 @@ public class fingerTable implements Protocol{
     private HashMap<Integer, chord> fingerTable;
     private peerNode parent;
 
+    double maxSize = 2147483647 * 2;
 
     //for ours we will always have 32 entries in our space, 32 bit id baby and such...
 
@@ -34,13 +35,14 @@ public class fingerTable implements Protocol{
 
     public void printTable(){
         int note = 1;
+        DecimalFormat df = new DecimalFormat("#");
+        df.setMaximumFractionDigits(8);
         System.out.println("================================");
-        System.out.println("I am hash of: " + this.parent.giveHash());
+        System.out.println("I am hash of: " + df.format(this.parent.giveHash()));
         System.out.println("My ip is: " + this.parent.giveName());
         for (HashMap.Entry<Integer,chord> entry : this.fingerTable.entrySet()){
 
-            DecimalFormat df = new DecimalFormat("#");
-            df.setMaximumFractionDigits(8);
+            
            
             System.out.println("Entry: " + df.format(entry.getValue().getPosition()) +" " + entry.getKey() + " " + df.format(entry.getValue().getHash()) + " " + entry.getValue().getAddress());
             note++;
@@ -56,13 +58,13 @@ public class fingerTable implements Protocol{
 
     public void defaultSetup(double myHash, String myIp){
         int note = 1;
-        for (Integer i = 1; i < 6; i++){
+        for (Integer i = 1; i < 33; i++){
             chord tempChord = new chord(myHash, this.parent.giveName());
 
             double temp = this.parent.giveHash()+(Math.pow(2, note-1));
             //System.out.println((Math.pow(2, note-1)));
             //System.out.println(temp);
-            System.out.println(Math.pow(2, note-1));
+            //System.out.println(Math.pow(2, note-1));
             //formating issues:
             DecimalFormat df = new DecimalFormat("#");
             df.setMaximumFractionDigits(8);
@@ -76,8 +78,7 @@ public class fingerTable implements Protocol{
         this.parent.myBackwardCon = null;
         this.parent.forwardHash = myHash;
         this.parent.backHash = myHash;
-
-        printTable();
+        //printTable();
     }
 
     public int giveRandomFinger(){
@@ -98,13 +99,13 @@ public class fingerTable implements Protocol{
 
     public void generateOnlyTable(double myHash, String myIp){
         int note = 1;
-        for (Integer i = 1; i < 6; i++){
+        for (Integer i = 1; i < 33; i++){
             chord tempChord = new chord(myHash, this.parent.giveName());
 
             double temp = this.parent.giveHash()+(Math.pow(2, note-1));
             //System.out.println((Math.pow(2, note-1)));
             //System.out.println(temp);
-            System.out.println(Math.pow(2, note-1));
+            //System.out.println(Math.pow(2, note-1));
             //formating issues:
             
             DecimalFormat df = new DecimalFormat("#");
@@ -114,12 +115,47 @@ public class fingerTable implements Protocol{
             this.fingerTable.put(i, tempChord);
             note++;
         }
-        System.out.println("PRINTING");
-        printTable();
+        //System.out.println("PRINTING");
+        //printTable();
 
     }
 
+    //used when downloading files
+    public void searchForFile(String nameofFile){
+        System.out.println("Searching...");
+        double hash =  nameofFile.hashCode();
+        normalize(hash);
+        if (backwardRange(hash) == true){
+            //we totally do
+            System.out.println("We hold this file, no need to search");
+            //send file then
+            //return "0";
+        }
+        else{
+            int gothisspot = searchHighestLowest(hash);
+            //System.out.println(gothisspot);
+            //System.out.println("Is probably held under : " + giveEntry(gothisspot).getHash());
+            //send it along to there
+
+            Event helpMe = EventFactory.createEvent(DOWNLOADFILE);
+            String [] brokenString = giveEntry(gothisspot).getAddress().split(":");
+
+            String arguments = this.parent.giveName() + " " + nameofFile;
+            helpMe.setData(arguments);
+            connectionData tempCon = this.parent.peerConnection(brokenString[0], Integer.valueOf(brokenString[1]));
+            try {
+                tempCon.getTcpSender().sendMessage(helpMe.getBytes(), DOWNLOADFILE);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
+        //return "";
+    }
+
     public void searchForThisHash(double hash){
+        //System.out.println("Searching...");
         normalize(hash);
         if (backwardRange(hash) == true){
             //we totally do
@@ -129,7 +165,7 @@ public class fingerTable implements Protocol{
         }
         else{
             int gothisspot = searchHighestLowest(hash);
-            System.out.println(gothisspot);
+            //System.out.println(gothisspot);
             System.out.println("Is probably held under : " + giveEntry(gothisspot).getHash());
             //send it along to there
 
@@ -151,32 +187,36 @@ public class fingerTable implements Protocol{
     }
 
 
-
-
     //method specifically for searching
     public int searchHighestLowest(double n){
+        System.out.println("Looking for....." + n);
         double hashFound = 0;
         int position = 0;
         for (HashMap.Entry<Integer, chord> entry : this.fingerTable.entrySet()) {
-            System.out.println(hashFound);
+            //System.out.println(hashFound);
             double temp = entry.getValue().getPosition();
             if (temp > hashFound && temp <= n){
                 hashFound = temp;
                 position = entry.getKey();
             }
         }
-        System.out.println("End of loop2");
+        //System.out.println("End of loop2");
         //we need to verify the loop over
         Object[] keys = fingerTable.keySet().toArray();
 
         if (hashFound == 0){
             //lets see if we wrap around zero here with this hash
-            if (n < this.parent.giveHash()){
-                //odds are we wrap around, lets be cautious
-                searchForThisHash(31);
-            }
+            //if its above what we can see, give it to our entry at max, at 32
+            return 32;
+            
+            //if (n < this.parent.giveHash()){
+            //    //odds are we wrap around, lets be cautious
+           //     System.out.println("Loop around/go next?");
+           //     printTable();
+           //     searchHighestLowest(2147483647*2);
+           // }
 
-            System.out.println("Go far");
+            //System.out.println("Go far");
             //if (giveEntry(keys.length )){
 
             //}
@@ -212,16 +252,16 @@ public class fingerTable implements Protocol{
                 position = entry.getKey();
             }
         }
-        System.out.println("End of loop");
+        //System.out.println("End of loop");
 
         if (hashFound == 0){
-            System.out.println("Override, creep forward");
+            //System.out.println("Override, creep forward");
             if (hashFound < this.parent.backHash && n > 0){
                 return -1;
             }
             if (hashFound < this.parent.backHash){
                 //might have overshot, lets backtrack it a little bit
-                return findHighestLowest(31);
+                return findHighestLowest(maxSize - 1);
             }
             
         //end of traditional range, do we go over zero?
@@ -249,7 +289,7 @@ public class fingerTable implements Protocol{
             
             if (temp <= n) {
                 highestLowest = entry.getKey();
-                System.out.println("Entry: " + df.format(temp) + " " + df.format(entry.getKey()) + " " + " " + df.format(entry.getValue().getHash()));
+                //System.out.println("Entry: " + df.format(temp) + " " + df.format(entry.getKey()) + " " + " " + df.format(entry.getValue().getHash()));
             }
             // gogogogogogogog
             if (temp > n) {
@@ -298,12 +338,12 @@ public class fingerTable implements Protocol{
             //this is the one thing we will validate, else we send it all out, outsourced.
                 if (backwardRange(findMe) == true){
                     //we mark it as ours, its under our back range
-                    System.out.println("Yeah, we own it");
+                    //System.out.println("Yeah, we own it");
                      //ours
                 }
                 else {
                     //if its not ours, we just assign it to our forward node, and ask forward node.
-                    System.out.println("Says it was us, thats wrong");
+                    //System.out.println("Says it was us, thats wrong");
                     chord tempChord = entry.getValue();
                     tempChord.setHash(this.parent.forwardHash);
                     tempChord.setAddresss(this.parent.myForwardCon.getName());
@@ -312,7 +352,7 @@ public class fingerTable implements Protocol{
                     this.fingerTable.put(entry.getKey(), tempChord);
                     double normalized = normalize(entry.getValue().getPosition());
                     String arguments = this.parent.giveName() + " " + normalized + " " + entry.getKey();
-                    System.out.println("Arguments here : " + arguments);
+                    //System.out.println("Arguments here : " + arguments);
                     validateFinger.setData(arguments);
                 
                     try {
@@ -332,7 +372,7 @@ public class fingerTable implements Protocol{
                 //connectionData thisCon = this.parent.peerConnection(brokenString[0],Integer.valueOf(brokenString[1]));
                 
                 String arguments = this.parent.giveName() + " " + normalize(entry.getValue().getPosition())+ " " + entry.getKey();
-                System.out.println("Arguments here : " + arguments);
+                //System.out.println("Arguments here : " + arguments);
                 validateFinger.setData(arguments);
 
                 try {
@@ -350,17 +390,15 @@ public class fingerTable implements Protocol{
 
         }
 
-        printTable();
+        //printTable();
 
 
     }
 
+
     //helper method to see if number is in our backhash range that we currently control
     public boolean backwardRange(double findHash){
-        if (findHash > 31){
-            //normalize it
-            findHash = findHash - 31;
-        }
+        findHash = normalize(findHash);
         if (findHash == this.parent.giveHash()){
             return true;
         }
@@ -389,10 +427,7 @@ public class fingerTable implements Protocol{
     }
 
     public boolean forwardRange(double findHash){
-        if (findHash > 31){
-            //normalize it
-            findHash = findHash - 31;
-        }
+        findHash = normalize(findHash);
         //see if this hash is between me and my next
        
         if (this.parent.forwardHash < this.parent.giveHash()){
@@ -442,7 +477,7 @@ public class fingerTable implements Protocol{
 
     public String determineSpotOld(Double findHash){
         double currentHash = this.parent.giveHash();
-        printTable();
+        //printTable();
 
         //see if we are currently the only node here, in which case we are both
         if (this.parent.forwardHash == this.parent.giveHash() && this.parent.backHash == this.parent.giveHash()){
@@ -493,15 +528,15 @@ public class fingerTable implements Protocol{
                          .append(entry.getValue().getHash())
                          .append(" ");
         }
-        printTable();
+        //printTable();
         return stringBuilder.toString();
     }
 
     public void loopValidate(){
-        System.out.println("self update");
-        System.out.println("my hash: " + this.parent.giveHash());
-        System.out.println("forward/both hash " + this.parent.forwardHash);
-        System.out.println("this connection : " + this.parent.myForwardCon.getName());
+        //System.out.println("self update");
+        //System.out.println("my hash: " + this.parent.giveHash());
+       // System.out.println("forward/both hash " + this.parent.forwardHash);
+       // System.out.println("this connection : " + this.parent.myForwardCon.getName());
 
         for (HashMap.Entry<Integer,chord> entry : this.fingerTable.entrySet()){
             if (this.parent.backHash == this.parent.forwardHash){
@@ -551,21 +586,21 @@ public class fingerTable implements Protocol{
     }
 
     public double normalize(double hash){
-        if (hash > 31){
-            hash = hash - 31;
+        if (hash > maxSize){
+            hash = hash - this.maxSize;
         }
         return hash;
     }
 
     public void updateTableNeighbors(){
-        System.out.println("self update");
+        //System.out.println("self update");
         for (HashMap.Entry<Integer,chord> entry : this.fingerTable.entrySet()){
-            System.out.println("Validating : " + entry.getValue().getPosition());
+            //System.out.println("Validating : " + entry.getValue().getPosition());
             double findMe = normalize(entry.getValue().getPosition());
 
             if (backwardRange(findMe) == true){
                 //we mark it as ours, its under our back range
-                System.out.println("Yeah, we own it");
+                //System.out.println("Yeah, we own it");
                 chord tempChord = entry.getValue();
                 tempChord.setHash(this.parent.giveHash());
                 tempChord.setAddresss(this.parent.myBackwardCon.getName());
@@ -573,7 +608,7 @@ public class fingerTable implements Protocol{
                 //ours
             }
             else if (forwardRange(findMe) == true){
-                System.out.println("Its our forward node:");
+                //System.out.println("Its our forward node:");
                 chord tempChord = entry.getValue();
                 tempChord.setHash(this.parent.forwardHash);
                 tempChord.setAddresss(this.parent.myForwardCon.getName());
@@ -601,12 +636,12 @@ public class fingerTable implements Protocol{
             }
 
         }
-        printTable();
+       // printTable();
     }
 
 
     public void updateFingerTable(ArrayList<chord> tempFingerTable){
-        System.out.println("UPDATE");
+        //System.out.println("UPDATE");
         DecimalFormat df = new DecimalFormat("#");
         df.setMaximumFractionDigits(8);
         HashMap<String, String> callTable = new HashMap<String, String>();
@@ -619,8 +654,8 @@ public class fingerTable implements Protocol{
             //find the entry.getValue.getPosition
             double last = 0;
             String spot = "";
-            System.out.println("Forward finger: " + df.format(this.parent.forwardHash));
-            System.out.println(entry.getValue().getPosition());
+           // System.out.println("Forward finger: " + df.format(this.parent.forwardHash));
+            //System.out.println(entry.getValue().getPosition());
             //loop scenario first
             if (this.parent.backHash == this.parent.forwardHash){
                 this.validateFingerTable();
@@ -632,7 +667,7 @@ public class fingerTable implements Protocol{
                 //we mark it as ours, its under our back range
                 chord tempChord = entry.getValue();
                 tempChord.setHash(this.parent.giveHash());
-                System.out.println("this hash : " + this.parent.giveHash());
+                //System.out.println("this hash : " + this.parent.giveHash());
                 this.fingerTable.put(entry.getKey(), tempChord);
                 //ours
                 spot = "ours";
@@ -648,7 +683,7 @@ public class fingerTable implements Protocol{
             else{
                 //else we get as close to it as we can from the finger tabler
                 int lowestHighest = findHighestLowestTemp(entry.getValue().getPosition(), tempFingerTable);
-                System.out.println("Lowest highest here: " + lowestHighest);
+                //System.out.println("Lowest highest here: " + lowestHighest);
                 chord oldChord = tempFingerTable.get(lowestHighest);
                 chord tempChord = entry.getValue();
 
@@ -660,8 +695,8 @@ public class fingerTable implements Protocol{
             }
            
 
-            System.out.println(entry.getValue().getPosition());
-            System.out.println("I will contact: " + spot + " about " + df.format(entry.getKey()) + " with value of " + df.format(entry.getValue().getHash()));
+            //System.out.println(entry.getValue().getPosition());
+            //System.out.println("I will contact: " + spot + " about " + df.format(entry.getKey()) + " with value of " + df.format(entry.getValue().getHash()));
            
             note++;
         }
@@ -676,7 +711,7 @@ public class fingerTable implements Protocol{
             //formating issues:
             
             
-           System.out.println(entry.getKey() + " " + entry.getValue());
+           //System.out.println(entry.getKey() + " " + entry.getValue());
         }
 
 
@@ -684,7 +719,7 @@ public class fingerTable implements Protocol{
 
 
         System.out.println("Done");
-        printTable();
+       //printTable();
         //askForInfo(callTable);
 
     }
