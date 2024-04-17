@@ -59,15 +59,15 @@ public class discoveryNode extends Node{
         //pull a random node
         Random rand = new Random();
         if (this.NodesList.size() == 0){
-            System.out.println("you are first node, nothing will be sent, except yay");
+           // System.out.println("you are first node, nothing will be sent, except yay");
             findME = "yay";
         }
         else{
             int randomID = rand.nextInt(this.NodesList.size());
             List<connectionData> values = new ArrayList<>(NodesList.values());
             connectionData randomValue = values.get(randomID);
-            System.out.print("IP: " + randomValue.getIP());
-            System.out.print("Port: " + randomValue.getPort());
+            //System.out.print("IP: " + randomValue.getIP());
+            //System.out.print("Port: " + randomValue.getPort());
             findME = randomValue.getIP() + ":" + randomValue.getPort();
         }
 
@@ -101,7 +101,7 @@ public class discoveryNode extends Node{
         
     public void deregRequest(String[][]data, connectionData con){
         String tempkey = data[0][0] +":" +data[0][1];
-        System.out.println("TEMPKEY WAS: " + tempkey);
+        //System.out.println("TEMPKEY WAS: " + tempkey);
         System.out.println("REMOVED");
         if (NodesList.containsKey(tempkey)){
             //System.out.println("Rejected");
@@ -119,7 +119,7 @@ public class discoveryNode extends Node{
         String tempkey = data[0][0] +":" +data[0][1];
         double nodesHash = Double.valueOf(data[0][2]);
         Boolean correct = validateConnection(con.getSocket(), tempkey, nodesHash);
-        correct = true;
+        //correct = true;
         
         if (correct == false){
             //System.out.println("Rejected, not true ip");
@@ -176,7 +176,7 @@ public class discoveryNode extends Node{
             if (nodesHash == ((hashedName))){
                 return true;
             }
-            System.out.println("FALSE");
+            //System.out.println("FALSE");
             return false;
         }
         else{

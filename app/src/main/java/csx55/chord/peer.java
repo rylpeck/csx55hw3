@@ -26,7 +26,7 @@ public class peer {
         }
 
         peer myCompute  = new peer();
-        System.out.println("Peer starting");
+        //System.out.println("Peer starting");
 
         //make a mess, to use it later
         
@@ -110,10 +110,10 @@ public class peer {
         
         switch (commandBroken[0].toString()){
             case "Cm":
-                System.out.println("CM");
+                //System.out.println("CM");
                 node.showConnections();
                 break;
-            case "finger":
+            case "finger-table":
                 node.printFingerTable();
                 break;
             case "validate":
@@ -127,6 +127,9 @@ public class peer {
                 break;
             case "download":
                 node.downloadFile(commandBroken[1]);
+                break;
+            case "files":
+                node.printFiles();
                 break;
 
             case "exit":

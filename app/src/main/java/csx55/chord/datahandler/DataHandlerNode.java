@@ -71,7 +71,7 @@ public class DataHandlerNode extends DataHandler{
                 //handleMessage(data, sock);
                 break;
             case REGISTRATION_RESPONSE:
-                System.out.println("Registration Response");
+                //System.out.println("Registration Response");
                 parent.registerRespond(data, con.getSocket());
                 //this.nodeName = this.parent.myIP + ":" + this.parent.myPort;
                 break;
@@ -88,7 +88,7 @@ public class DataHandlerNode extends DataHandler{
                 //parent.deregisterRespond(data, con.getSocket());
                 break;
             case NOTIFYNEIGHBOR:
-                System.out.println("Neighbor request");
+                //System.out.println("Neighbor request");
                 parent.recievedNeighbor(data, con);
                 break;
             case GIVEFINGERTABLE:

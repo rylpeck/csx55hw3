@@ -55,7 +55,7 @@ public class fileManager implements Protocol{
         File folder = new File(this.myFolder);
 
         if (!folder.isDirectory()) {
-            System.out.println("Provided path is not a directory.");
+           // System.out.println("Provided path is not a directory.");
             return;
         }
 
@@ -63,7 +63,7 @@ public class fileManager implements Protocol{
         
         // Check if the directory is empty
         if (files == null || files.length == 0) {
-            System.out.println("Directory is empty.");
+            //System.out.println("Directory is empty.");
             return;
         }
             
@@ -99,10 +99,10 @@ public class fileManager implements Protocol{
 
 
         try {
-            System.out.println(tempCon.getIP() + " " + tempCon.getPort());
+            //System.out.println(tempCon.getIP() + " " + tempCon.getPort());
             tempCon.getTcpSender().sendMessage(readFile.getBytes(), CONTACTPEERRESPONSE);
             
-            System.out.println("Sent message");
+            //System.out.println("Sent message");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -136,10 +136,10 @@ public class fileManager implements Protocol{
 
         
         try {
-            System.out.println(tempCon.getIP() + " " + tempCon.getPort());
+            //System.out.println(tempCon.getIP() + " " + tempCon.getPort());
             tempCon.getTcpSender().sendMessage(sendMe, CONTACTPEERRESPONSE);
             
-            System.out.println("Sent message");
+            //System.out.println("Sent message");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -206,7 +206,7 @@ public class fileManager implements Protocol{
             
         
             fos.close();
-            System.out.println("Wrote File");
+            System.out.println("Wrote an incoming file");
         } catch (IOException e) {
             System.out.println("WHAT");
             e.printStackTrace();
@@ -270,21 +270,17 @@ public class fileManager implements Protocol{
 
     //ran after declaring our backhas as new to maket he math easier
     public void backTransfer(){
+
        
         File folder = new File(this.myFolder);
         
-        // Check if the folder exists
-        if (!folder.exists() || !folder.isDirectory()) {
-            System.out.println("The specified folder does not exist or is not a directory.");
-            return;
-        }
-        
+       
         // Get list of files in the folder
         File[] files = folder.listFiles();
         
         // Check if there are any files
         if (files == null || files.length == 0) {
-            System.out.println("No files found in the folder.");
+            //System.out.println("No files found this node");
             return;
         }
         
@@ -304,18 +300,12 @@ public class fileManager implements Protocol{
         //throw all data forward, dont care, gg, im out, bye
         File folder = new File(this.myFolder);
         
-        // Check if the folder exists
-        if (!folder.exists() || !folder.isDirectory()) {
-            System.out.println("The specified folder does not exist or is not a directory.");
-            return;
-        }
-        
         // Get list of files in the folder
         File[] files = folder.listFiles();
         
         // Check if there are any files
         if (files == null || files.length == 0) {
-            System.out.println("No files found in the folder.");
+            System.out.println("No files in this node");
             return;
         }
         
@@ -331,6 +321,11 @@ public class fileManager implements Protocol{
 
     double maxSize = 2147483647 * 2;
     public double normalize(double hash){
+        if (hash < 0){
+            double temp = -1 * hash;
+            //hashedName = (-1.0 * hashedName) + 2147483647;
+            hash = (temp + 2147483647);
+        }
         if (hash > maxSize){
             hash = hash - this.maxSize;
         }
@@ -342,7 +337,10 @@ public class fileManager implements Protocol{
         String fileName = file.getName();
         double trueHash = normalize(fileName.hashCode());
         if (this.parent.myFingerTable.backwardRange(trueHash) == true){
-            //send it
+            //this means its under our hood
+        }
+        else{
+            //if its not under our area then we send it
             sendTheFileBytes(this.parent.myBackwardCon.getName(), fileName);
         }
         //method to verify if the folder is backtransferable
@@ -356,7 +354,7 @@ public class fileManager implements Protocol{
         if (files != null) {
             for (File file : files) {
                 Double quickHash = normalize(file.getName().hashCode());
-                System.out.println(file.getName() + " " + quickHash);
+                System.out.println(file.getName() + " " + normalize(quickHash));
             }
             return 0;
         } else {

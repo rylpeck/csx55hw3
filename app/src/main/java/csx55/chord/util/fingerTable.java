@@ -124,7 +124,8 @@ public class fingerTable implements Protocol{
     public void searchForFile(String nameofFile){
         System.out.println("Searching...");
         double hash =  nameofFile.hashCode();
-        normalize(hash);
+        hash = normalize(hash);
+       // System.out.println("normalized maybe " + hash);
         if (backwardRange(hash) == true){
             //we totally do
             System.out.println("We hold this file, no need to search");
@@ -154,19 +155,23 @@ public class fingerTable implements Protocol{
         //return "";
     }
 
+    //general search
     public void searchForThisHash(double hash){
         //System.out.println("Searching...");
-        normalize(hash);
+        //System.out.println("Raw hash: " + hash);
+        hash = normalize(hash);
+
+        //System.out.println("Hash normalized: " + hash);
         if (backwardRange(hash) == true){
             //we totally do
             String arguments = "0";
-            System.out.println("We do");
+            //System.out.println("We do");
             //return "0";
         }
         else{
             int gothisspot = searchHighestLowest(hash);
             //System.out.println(gothisspot);
-            System.out.println("Is probably held under : " + giveEntry(gothisspot).getHash());
+           // System.out.println("Is probably held under : " + giveEntry(gothisspot).getHash());
             //send it along to there
 
             Event helpMe = EventFactory.createEvent(REQUESTHASHlOCATION);
@@ -189,7 +194,7 @@ public class fingerTable implements Protocol{
 
     //method specifically for searching
     public int searchHighestLowest(double n){
-        System.out.println("Looking for....." + n);
+        //System.out.println("Looking for....." + n);
         double hashFound = 0;
         int position = 0;
         for (HashMap.Entry<Integer, chord> entry : this.fingerTable.entrySet()) {
@@ -245,7 +250,7 @@ public class fingerTable implements Protocol{
         double hashFound = 0;
         int position = 0;
         for (HashMap.Entry<Integer, chord> entry : this.fingerTable.entrySet()) {
-            System.out.println(hashFound);
+            //System.out.println(hashFound);
             double temp = entry.getValue().getPosition();
             if (temp > hashFound && temp <= n){
                 hashFound = temp;
@@ -585,7 +590,13 @@ public class fingerTable implements Protocol{
 
     }
 
+
     public double normalize(double hash){
+        if (hash < 0){
+            double temp = -1 * hash;
+            //hashedName = (-1.0 * hashedName) + 2147483647;
+            hash = (temp + 2147483647);
+        }
         if (hash > maxSize){
             hash = hash - this.maxSize;
         }
@@ -649,7 +660,7 @@ public class fingerTable implements Protocol{
         int note = 1;
         for (HashMap.Entry<Integer,chord> entry : this.fingerTable.entrySet()){
 
-            System.out.println("Entry: " + entry.getValue().getPosition() +" " + entry.getKey() + " " + " " + entry.getValue().getHash());
+           // System.out.println("Entry: " + entry.getValue().getPosition() +" " + entry.getKey() + " " + " " + entry.getValue().getHash());
 
             //find the entry.getValue.getPosition
             double last = 0;
@@ -676,7 +687,7 @@ public class fingerTable implements Protocol{
                 chord tempChord = entry.getValue();
                 tempChord.setHash(this.parent.forwardHash);
                 tempChord.setAddresss(this.parent.myForwardCon.getName());
-                System.out.println("this hash : " + this.parent.giveHash());
+                //System.out.println("this hash : " + this.parent.giveHash());
                 this.fingerTable.put(entry.getKey(), tempChord);
                 spot = "theirs";
             }
@@ -689,7 +700,7 @@ public class fingerTable implements Protocol{
 
                 tempChord.setHash(oldChord.getHash());
                 tempChord.setAddresss(oldChord.getAddress());
-                System.out.println("this hash : " + this.parent.giveHash());
+                //System.out.println("this hash : " + this.parent.giveHash());
                 this.fingerTable.put(entry.getKey(), tempChord);
                 spot = oldChord.getAddress();
             }
@@ -718,7 +729,7 @@ public class fingerTable implements Protocol{
     
 
 
-        System.out.println("Done");
+        //System.out.println("Done");
        //printTable();
         //askForInfo(callTable);
 
